@@ -41,7 +41,7 @@ class SameNameSingleton(type):
         """
         super(SameNameSingleton, cls).__init__(*args, **kwargs)
 
-    def __call__(cls, name, *args, **kwargs):
+    def __call__(cls, name: str="DEFAULT_WORK_AREA", *args, **kwargs):
         if _instance_dict.get(name, None) is None:
             with cls._instance_lock:
                 _instance_dict[name] = super(SameNameSingleton, cls).__call__(name, *args, **kwargs)
