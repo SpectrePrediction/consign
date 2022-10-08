@@ -5,19 +5,52 @@ import builtins
 
 
 class CoroutineWorker(object):
+    """CoroutineWorker协程Worker，CoroutineWorker能够以并发的方式执行特定的协程函数，是所有Worker的基石
+
+    ``CoroutineWorker`` 可以将 :abbr:`控制权切换以实现并发的效果 (通过yield实现控制权切换)`
+
+    ``CoroutineWorker`` 的使用方法通常是 ``loop_work`` 阻塞并完成当前队列中的全部内容
+
+    如果你使用 ``CoroutineWorker`` 在多线程/进程环境下，那么 ``loop_work(forever=False)``  **在切换很快时是不可信的**
+
+    :abbr:`这是由于队列qsize不确定性 (官方的描述:由于多线程或者多进程的上下文，这个数字是不可靠的。请注意，这可能会在Unix平台上引起 NotImplementedError)` 以及框架的获取提交导致的
+
+    .. tip::
+
+       通常在多线程下使用 ``loop_work(forever=True)`` 或者重复 ``while True`` 使用 ``loop_work(forever=False)``
+
+    loop_work会把当前线程 **阻塞** 并作为一个 **临时的worker** 去工作
+
+    使用的是 **当前进程** 去工作，是 **单线程** 的，所以任何阻塞的函数都会导致阻塞。
+
+    ----
+
+    例子
+
+    .. code-block:: python
+
+        some_coroutine()
+
+        cw = CoroutineWorker()
+        cw.loop_work()
+
+    :param str work_area_name:
+
+        ``WorkArea`` 的名字，``CoroutineWorker`` 会通过名字获取对应的 ``WorkArea``
+
+    :param WorkArea work_area:
+
+        work_area是显式参数，需要显式调用
+
+        可以直接指定 ``WorkArea`` ，如果直接指定，会跳过 ``work_area_name`` 的查找过程
+
+    :raise AssertionError:
+        当传入参数 ``work_area_name`` 无法被找到时抛出
+
+    """
 
     def __init__(self, work_area_name: str="DEFAULT_WORK_AREA", *, work_area=None):
-        """
-        协程Worker，现在的他是所有Worker的底层，更多的Worker不是继承就是组合他
-        协程Worker会负责一个work area的队列，处理队列中的任务，他本质是单线程的
-        通过控制权专业实现来回切换的效果，模拟并发，举个例子：
-            如果你使用time.sleep 1（其模拟一个阻塞的任务），那么单线程下的协程Worker同时会阻塞 1 秒再执行下一段
-            但如果你使用此库自带的 asleep 1 (模拟协程任务)，那么单线程下你也能发现，可以实现类似并发的效果，因为asleep是
-                非阻塞的
-        :param work_area_name: work_area名字，默认 默认work_area，会通过名字获取work_area，如果没找到，抛出异常
-        :param work_area: 直接指定work_area，如果直接指定，会跳过work_area_name的查找过程
-        :raise: AssertionError
-        """
+        #: ``CoroutineWorker`` 为此 ``WorkArea`` 工作
         self.work_area = work_area or getattr(builtins, "WORK_AREA_DICT", {}).get(work_area_name, None)
         assert self.work_area, f"WORK_AREA_DICT不存在 或 WORK_AREA_DICT中没有名为'{work_area_name}'的key"
 
@@ -25,34 +58,79 @@ class CoroutineWorker(object):
 
     def qsize(self):
         """
-        队列中的大概数量
-        可用于判断当前队列中是否还有未启动的协程
-        注意：这只是获取大概数量，官方有说，他是不准确的，具体如下：
+        获得 ``WorkArea`` 队列中的大概数量
+
+        .. warning::
+
             由于多线程或者多进程的上下文，这个数字是不可靠的。
+
             请注意，这可能会在Unix平台上引起 NotImplementedError ，如 macOS ，因为其上没有实现 sem_getvalue() 。
+
         :return:
-        :raise: NotImplementedError
+
+            获得 ``WorkArea`` 队列中的大概数量
+
+        :raise NotImplementedError:
+
+            能会在Unix平台上引起 NotImplementedError ，如 macOS ，因为其上没有实现 sem_getvalue()
+
         """
         return self.work_area.queue.qsize()
 
     def submit_work(self, *args):
         """
-        提交给队列
+        提交任务到 ``WorkArea`` 队列
+
+        不建议外部调用， 如果调用需要明白自己正在做什么
+
         :param args:
-        :return:
-        :raise: Full (put触发)
+
+            按照规定 ``WorkArea`` 队列中是只应当put一个定义好的tuple
+
+            其格式为(yield_value, generator, receipts)
+
+            这里因为不向外调用，所以使用可变参偷了个懒，就无需再手动创建tuple
+
+        :return: None
+
+        :raise Full:
+
+            当 ``WorkArea`` 队列存放满时触发
+
         """
         self.work_area.queue.put(args)
-        # 为什么改用上面这个？因为我发现其实submit_work不应该给用户调用，即使是外部也是自己明白需要做什么而调用
+        # 为什么改用上面这个？
+        # 因为我发现其实submit_work不应该给用户调用，即使是外部也是自己明白需要做什么而调用
         # 那么通过args，直接转换成tuple，偷个懒
-        # self.work_area.queue.put((get, generator, receipts))
+        # 原来的代码：
+        # self.work_area.queue.put((yield_value, generator, receipts))
 
     def work_once(self, time_out=None):
         """
-        工作一次
-        :param time_out:get的wait时长
-        :return: bool False意味着收到了约定的结束信号，True表示正常结束
-        :raise: Empty、ValueError(Queue get引发)
+        ``CoroutineWorker`` 获取一次 ``WorkArea`` 队列中的内容并执行一次
+
+        任意一种情况返回都会视作一次Work
+
+        :param time_out:
+
+            等待 ``WorkArea``  队列获取内容的等待超时时长
+
+        :return:
+
+            返回bool类型
+
+            False 意味着收到了约定的结束信号
+
+            True 表示正常结束Work
+
+        :raise Empty:
+
+            当 ``WorkArea`` 队列为空时阻塞时长超过参数 ``time_out`` 时抛出
+
+        :raise ValueError:
+
+            当参数 ``time_out`` 不正确时抛出
+
         """
         # yield_value是由yield传递出来的值, 尽可能的是一个callable
         #   新版和旧版的区别在于：不在要求一定是一个callable，如果callable，那么调用，否则原样返回
@@ -98,22 +176,39 @@ class CoroutineWorker(object):
 
     def loop_work(self, *, time_out=0.1, forever=True):
         """
-        阻塞并工作直到某种条件达成或者收到停止信号
 
-        :param time_out: 单次work_once的等待时间，也是当队列为空时的轮询时间
-        :param forever: 是否永久阻塞，如果非永久，那么loop_work会考虑队列的qsize是否<=0
-            如果<=0那说明队列中内容被执行完毕了，那么退出循环
+        ``loop_work`` 阻塞并完成当前队列中的全部内容 或者 收到停止信号
 
-            多线程下(AsyncWorker)需要注意：
-                forever=False不建议使用在多线程环境中，如果使用，你需要考虑loop_work退出后线程的情况
-                    因为在多线程中，qsize是不确定的，所以可能超出你的预期
+        .. warning::
 
-                同样在多线程下，forever=False也需要注意，由于此框架的特殊性（获取-执行-提交）和qsize的不确定性，可能出现
-                    获取后执行时，新的任务还未提交(获取qsize的时候，另一个线程get取走了最后的单个任务)，此时获取qsize可
-                    能为0，导致loop work退出，任何单独的任务都有可能导致这个情况发生，所以forever=False是不可信的。如果
-                    你需要指定某个任务完成并阻塞，那么建议使用wait
+            在多线程/进程环境下
 
-        :return:
+            forever参数为False时需要考虑 :abbr:`队列qsize的不确定性 (由于多线程或者多进程的上下文，这个数字是不可靠的。)`
+
+            .. tip::
+
+                通常在多线程下使用 ``loop_work(forever=True)`` 或者重复 ``while True`` 使用 ``loop_work(forever=False)``
+
+        :param time_out:
+
+            等待 ``WorkArea``  队列获取内容的等待超时时长
+
+        :param forever:
+
+            是否永久阻塞
+
+            如果 ``forever`` 为False，那么 ``loop_work`` 会考虑队列的 ``qsize`` 是否<=0
+
+            如果队列的 ``qsize`` <=0，那么退出循环
+
+            如果你需要指定某个任务完成并阻塞，那么建议使用 ``wait`` 来确保完成优于直接使用 ``forever`` =True
+
+        :return: None
+
+        :raise ValueError:
+
+            当参数 ``time_out`` 不正确时抛出
+
         """
         flag = True
         while flag:

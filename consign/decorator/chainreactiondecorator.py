@@ -4,20 +4,91 @@ from ..worker.iterationcontext import AutoReceipts
 
 
 def chain_reaction(func):
-    """
-    链式反应函数 支持修饰器用法
-    相较于以往通过传参给Worker在进行时进行链式反应而言，重构后的consign需求更显式的调用链式反应：
-        现在的chain_reaction更加自由，允许在同一个协程函数中，只启动部分函数链式反应
-        同样兼容旧版，允许修饰器用法，被修饰函数意味着当其出现在任意协程内，都会以链式反应触发
-        相较于旧版，链式反应不再依赖Worker是否启动处理链式反应，而是将主动权给到函数上，被修饰或者调用的函数将会链式
+    """chain_reaction使得嵌套协程函数可以以链式的方式运行.
 
-    链式反应是否启动区别在于，正常的被修饰的协程函数调用是非阻塞的，直接返回Task类，你可以通过许多方法去阻塞他
-        但一旦启动了链式反应，当一个启动链式反应的协程函数（子协程）运行在另一个被修饰的协程函数（父协程）中，
-            将会阻塞子协程函数，直到子协程函数结束，再次启动父协程函数，同时返回的是子协程的返回值而不是task
-        简单的说，他能让协程函数中的协程函数以普通顺序的方式运行，但同时能够享受控制权切换的效果
+    .. warning::
 
-    :param func:
-    :return:
+        chain_reaction接收的参数func必须是被 ``coroutine`` 修饰的委托函数.
+
+    被 ``chain_reaction`` 修饰的函数会被添加上对应的标记
+
+    他会重新构造一个精心设计的回调函数来完成嵌套协程到外层协程控制权的切换
+
+    ``Worker`` 会通过标记确认一个协程是否是被 ``chain_reaction`` 修饰，随后通过标记传递必须的信息以供回调时使用
+
+    .. seealso::
+
+        之所以会需要标记传递信息，原因在于现在的 ``chain_reaction`` 的主动权在函数手上
+
+        而旧版在Worker手上，相比之下新版更加自由和随心所欲，但旧版方便，却不好控制
+
+    ``chain_reaction`` 是否修饰的区别在于：
+
+    正常的被修饰的协程函数在被yield调用是非阻塞的，直接返回Task类
+
+    被修饰的函数在被yield调用时会等待函数执行完毕，并直接返回值而非Task类
+
+    简单的说，他能让协程函数中的协程函数以普通顺序的方式运行，但同时能够享受控制权切换的效果
+
+    ----
+
+    例子
+
+    .. tab-set::
+
+        .. tab-item:: 使用chain_reaction
+
+            .. code-block:: python
+
+                from consign import coroutine, chain_reaction
+
+                @chain_reaction
+                @coroutine
+                def get_value():
+                    yield ...
+                    return 10
+
+                @coroutine
+                def my_test():
+                    value = yield get_value
+                    print(value)
+                    # value is 10
+
+                my_test()
+                CoroutineWorker().loop_work(forever=True)
+
+        .. tab-item:: 不使用chain_reaction
+
+            .. code-block:: python
+
+                from consign import coroutine
+
+                @coroutine
+                def get_value():
+                    yield ...
+                    return 10
+
+                @coroutine
+                def my_test():
+                    value = yield get_value
+                    print(value)
+                    # value is Task类
+                    # 并且此时get_value并没完成
+
+                my_test()
+                CoroutineWorker().loop_work(forever=True)
+
+    ``chain_reaction`` 是比轮询更优雅的，但并非在所有情况下
+
+    通常而言，如果对时间有更高可控性的可以使用 ``chain_reaction``
+
+    而更高性能还是建议使用 ``wait``
+
+    :param function func:
+        必须是被 ``coroutine`` 修饰的委托函数
+
+    :raise AssertionError:
+        当传入参数 ``func`` 不是被 ``coroutine`` 修饰的委托函数时抛出
     """
 
     order = getattr(func, "order", None)

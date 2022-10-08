@@ -8,18 +8,98 @@ from .consignorder import ConsignOrder
 
 
 def coroutine(debug: bool = False, *, create_callback=None, complete_callback=None):
-    """
-    最关键的，协程修饰器
-    协程修饰器使得一个函数得以以协程的方式运行
-    如果你的函数返回的并不是生成器，那么他会使用一个替代生成器函数，对齐生成器函数继续往下
-    生成器函数会被执行部分内容后提交进入所在work area区域的队列中
-        如果需要更换work area无需传递任何参数，仅仅使用With WorkArea即可
-        被修饰的函数会被添加order属性，记录了自身创建的部分信息
-        被修饰的函数返回值会被修改成Task，同时不再阻塞，你可以使用wait或者从task中获取更多信息（返回值，状态等）
+    """consign的核心，coroutine使得被修饰函数可以以协程的方式被执行
 
-    :param debug: 使用debug使得修饰器失效，返回原函数
-    :param create_callback: 创建时回调函数，比协程先执行，需要一个参数用于接收task
-    :param complete_callback: 完成时回调函数，此时已经获取了协程的返回值，是协程结束后执行，需要一个参数用于接收task
+    他的作用很简单，就是包裹函数，无论是普通函数还是生成器函数，使得consign得以运行他们
+
+    .. seealso::
+
+        普通函数的话， ``coroutine`` 会生成一个包装好的生成器函数替代
+
+        随后如同对待生成器函数一般使用
+
+    ``coroutine`` 修饰时在程序创建之初会创建  ``ConsignOrder`` 并记录在order属性
+
+    在每次调用时创建  ``Task`` ，同时每次调用的返回值被 ``Task`` 替代，你可以从其中获取更多信息
+
+    被 ``coroutine`` 修饰的函数变成协程后，是非阻塞的，状态、返回值等都可以在 ``Task`` 中获取
+
+    ``coroutine`` 支持传入一些参数，其中比较特别是debug参数
+
+        debug参数允许你在不修改代码的情况下，以代码原本的阻塞逻辑运行
+
+    ``coroutine`` 为修饰器而设计，但你也可以把它当作函数使用，但这也会使得 ``ConsignOrder`` 被不停重复创建而效率低下
+
+    yield是 **控制权转移** 的关键 ，consign在单线程下依旧以 **并发** 的形式运行，关键就在于yield。
+
+    被 ``coroutine`` 修饰的函数最好是生成器函数，且 **尽可能的切分函数控制权** 提高控制权转换的频率
+
+    .. tab-set::
+
+        .. tab-item:: 一般
+
+            .. code-block:: python
+
+                def do_something_x():
+                    io.sleep(long long time)
+                    return something
+
+                @coroutine
+                def my_function():
+                    a = do_something_1()
+                    b = do_something_2()
+                    return a, b
+
+        .. tab-item:: 还行
+
+            .. code-block:: python
+
+                def do_something_x():
+                    io.sleep(long long time)
+                    return something
+
+                @coroutine
+                def my_function():
+                    a = yield do_something_1()
+                    b = yield do_something_2()
+                    return a, b
+
+        .. tab-item:: nice！
+
+            .. code-block:: python
+
+                @coroutine
+                def do_something_x():
+                    yield io.sleep(long long time)
+                    return something
+
+                @coroutine
+                def my_function():
+                    a = yield do_something_1()
+                    b = yield do_something_2()
+                    wait(a) or chain_reaction(do_something_x)
+                    return a, b
+
+    :param bool debug:
+
+        如果为True， ``coroutine`` 允许你在不修改代码的情况下，以代码原本的阻塞逻辑运行
+
+        如果是非生成器函数直接运行并返回结果
+
+        如果是生成器函数会以一个模拟普通函数的函数 :abbr:`代替运行 (阻塞并不断的next)` 并返回结果
+
+    :param function create_callback:
+
+        创建协程函数时执行的回调函数， ``create_callback`` 在协程函数执行前执行
+
+         ``create_callback`` 需要一个参数用于接收此次运行时的  ``Task``
+
+    :param function complete_callback:
+
+        完成协程函数时执行的回调函数， ``complete_callback`` 在协程函数获取到返回值后执行，但此时协程函数状态并非完成
+
+         ``complete_callback`` 需要一个参数用于接收此次运行时的  ``Task``
+
     :return:
     """
 
