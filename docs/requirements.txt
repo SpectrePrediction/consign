@@ -1,0 +1,5 @@
+sphinx==5.2.3
+sphinx_design==0.3.0
+sphinx-copybutton==0.5.0
+sphinx-automodapi==0.14.1
+furo==2022.9.29

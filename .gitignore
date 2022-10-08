@@ -157,4 +157,5 @@ cython_debug/
 coroutinetest.py
 test.py
 workareatest.py
-*.txt
+更新.txt
+
