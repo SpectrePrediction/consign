@@ -1,6 +1,6 @@
 from queue import Empty
 
-from ..decorator.consigntask import TaskResult, TaskState
+from ..decorator.consigntask import Task, TaskResult, TaskState
 from ..decorator.consigndecorator import coroutine
 from .coroutineworker import CoroutineWorker
 from .iterationcontext import AutoCallback
@@ -66,4 +66,4 @@ def wait(task, *, time_out=0.1):
     :param time_out: 最短轮询的间隔，为None只会在worker每次工作完成才轮询
     :return:
     """
-    return Supervisor(task).run_until_complete(time_out)
+    return Supervisor(task).run_until_complete(time_out) if isinstance(task, Task) else task

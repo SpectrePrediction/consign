@@ -45,12 +45,26 @@ def coroutine(debug: bool = False, *, create_callback=None, complete_callback=No
 
             return task
 
+        def debug_func(*args, **kwargs):
+            func_result = func(*args, **kwargs)
+
+            if not isgeneratorfunction(func):
+                return func_result
+
+            # 未来可使用iteration context优化
+            try:
+                result = next(func_result)
+                while True:
+                    result = func_result.send(result)
+            except StopIteration as e:
+                return e.value
+
         if debug is True:
-            return func
+            return wraps(func)(debug_func)
 
         setattr(coroutine_func, "order", order)
 
-        return wraps(func)(coroutine_func)
+        return wraps(func)(coroutine_func)  # 考虑将if debug 放到这里来
 
     if callable(debug):
         # 此时修饰器没有被call

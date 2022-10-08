@@ -66,7 +66,7 @@ class CoroutineWorker(object):
 
         if yield_value is None and generator.gi_frame.f_lasti == -1:
             # 表明此generator还未开始迭代, 进行初始化(此处是适配旧版）
-            _, yield_value = receipts.__next__(), generator.__next__()
+            _, yield_value = next(receipts), next(generator)
             # 选择提交而不是继续执行的原因是希望这样可以更快的轮询queue
             self.submit_work(yield_value, generator, receipts)
             return True
