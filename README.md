@@ -15,10 +15,28 @@
   consign 可以使函数得以以协程的方式运行，以更低的代码侵入性，获得更高的效率
 </p>
 
+----
+
 ### 快速开始
-consign 几乎没有需要安装的依赖，在GitHub中开箱即用即可
+
+`python>=3.7`：consign 几乎没有需要安装的依赖
+反之会需要安装 `contextvars`，仅此而已
+
+你可以通过 `pip` 快速安装:
+
+```bash
+pip install pyconsign
+```
+
+或者通过 `git` 开箱即用
+
+```bash
+python setup.py install
+```
 
 更多信息请查看 [consign's documentation](https://consign.readthedocs.io/zh_CN/latest/)
+
+----
 
 ### 简单例子
 
