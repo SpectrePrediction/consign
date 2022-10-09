@@ -30,6 +30,10 @@ consign
 .. image:: https://img.shields.io/github/v/release/SpectrePrediction/consign
    :alt: GitHub release (latest by date)
 
+.. image:: https://img.shields.io/pypi/v/pyconsign?color=orange
+   :target: https://pypi.org/project/pyconsign/
+   :alt: PyPI
+
 Generator-based Coroutines, Easy to use, Using the yield syntax
 
 consign 是基于 ``generator`` 的协程框架，易于使用，使用 ``yield`` 语法，同时允许普通函数和生成器函数 

@@ -9,7 +9,7 @@
 
 ---
 
-![版本](https://img.shields.io/badge/consign-1.0.2-blue) | [![Documentation Status](https://readthedocs.org/projects/consign/badge/?version=latest)](https://consign.readthedocs.io/zh_CN/latest/?badge=latest) | ![GitHub release (latest by date)](https://img.shields.io/github/v/release/SpectrePrediction/consign)
+![版本](https://img.shields.io/badge/consign-1.0.2-blue) | [![Documentation Status](https://readthedocs.org/projects/consign/badge/?version=latest)](https://consign.readthedocs.io/zh_CN/latest/?badge=latest) | ![GitHub release (latest by date)](https://img.shields.io/github/v/release/SpectrePrediction/consign) | [![PyPI](https://img.shields.io/pypi/v/pyconsign?color=orange)](https://pypi.org/project/pyconsign/)
 
 <p align="center">
   consign 可以使函数得以以协程的方式运行，以更低的代码侵入性，获得更高的效率
