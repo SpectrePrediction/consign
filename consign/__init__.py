@@ -4,7 +4,7 @@
 # #废弃# 今天像梦一样
 # 新: CommemorationDay: 2022.09.08
 # 新: 时隔一年的再次相见
-__Version__ = "1.0.2"
+__version__ = "1.0.2"
 
 from .workarea import *
 from .worker import *

@@ -153,9 +153,12 @@ cython_debug/
 .idea/
 .pytest_cache/
 
-# test.py
+# pypi
+.pypirc
+
+# 杂项
 coroutinetest.py
 test.py
 workareatest.py
 更新.txt
-
+build.bat

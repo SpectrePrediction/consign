@@ -20,6 +20,16 @@ consign
 
    GitHub page <https://github.com/SpectrePrediction/consign>
 
+.. image:: https://img.shields.io/badge/consign-1.0.2-blue
+   :alt: 版本
+
+.. image:: https://readthedocs.org/projects/consign/badge/?version=latest
+    :target: https://consign.readthedocs.io/zh_CN/latest/?badge=latest
+    :alt: Documentation Status
+
+.. image:: https://img.shields.io/github/v/release/SpectrePrediction/consign
+   :alt: GitHub release (latest by date)
+
 Generator-based Coroutines, Easy to use, Using the yield syntax
 
 consign 是基于 ``generator`` 的协程框架，易于使用，使用 ``yield`` 语法，同时允许普通函数和生成器函数 
@@ -41,7 +51,7 @@ consign 可以使函数得以以协程的方式运行，以更低的代码侵入
 文档介绍
 --------------
 
-文档使用 *Sphinx* 框架， *furo* 主题，左侧侧边栏是关键的部分
+`文档 <https://consign.readthedocs.io/zh_CN/latest/>`_ 使用 *Sphinx* 框架， *furo* 主题
 
 .. tab-set::
 
