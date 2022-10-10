@@ -6,7 +6,7 @@ with open("./README.md", encoding="utf-8") as ff:
     readme_text = ff.read()
 
 # Parse version
-init = Path(__file__).parent.joinpath("consign", "__init__.py")
+init, line = Path(__file__).parent.joinpath("consign", "__init__.py"), ""
 for line in init.read_text(encoding="utf-8").split("\n"):
     if line.startswith("__version__ ="):
         break

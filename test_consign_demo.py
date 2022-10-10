@@ -11,13 +11,13 @@ DEBUG = False
 
 @coroutine(DEBUG)
 def asleep_run(name: str):
-    print(f"Hello world! {name}", threading.currentThread())
+    print("Hello world! ", name, threading.currentThread())
 
     yield asleep(1)
-    print(f"Middle! 3 {name}", threading.currentThread())
+    print("Middle! ", name, threading.currentThread())
 
     yield asleep(1)
-    print(f"Over! 3 {name}", threading.currentThread())
+    print("Over! ", name, threading.currentThread())
     return name
 
 
@@ -30,34 +30,35 @@ def test_coroutine_worker():
 
 @coroutine(DEBUG)
 def my_io_read(path: str):
-    print(f"Let me start reading {path}", threading.currentThread())
+    print("Let me start reading ", path, threading.currentThread())
 
     yield time.sleep(3)
 
-    print(f"reading {path} over", threading.currentThread())
-    return f"<{path} read data>"
+    print("reading {path} over".format(path=path), threading.currentThread())
+    return "<{path} read data>".format(path=path)
 
 
 @coroutine(DEBUG)
 def preprocess(path: str):
-    print(f"preprocess {path} somethings", threading.currentThread())
+    print("preprocess {path} somethings".format(path=path), threading.currentThread())
 
     yield time.sleep(1.5)
 
-    print(f"preprocess {path} is over", threading.currentThread())
-    return f"<preprocess {path}>"
+    print("preprocess {path} is over".format(path=path), threading.currentThread())
+    return "<preprocess {path}>".format(path=path)
 
 
 @coroutine(DEBUG)
 def time_sleep_run(path: str):
-    print(f"my_test start and path is {path}", threading.currentThread())
+    print("my_test start and path is ", path, threading.currentThread())
 
     data_task = yield my_io_read(path)
     some_preprocess_task = yield preprocess(path)
 
     data, some_preprocess = wait(data_task), wait(some_preprocess_task)
 
-    print(f"my_test over {some_preprocess} and data is {data}", threading.currentThread())
+    print("my_test over {some_preprocess} and data is {data}".format(
+        some_preprocess=some_preprocess, data=data), threading.currentThread())
     return path
 
 
