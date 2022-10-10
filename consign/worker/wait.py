@@ -39,7 +39,8 @@ class Supervisor:
         self.wait_flag = True
         self.value = TaskResult.NoGet
         self.coroutine_worker = CoroutineWorker(work_area=task.work_area)
-        self.show_str = f"<Supervisor at {hex(id(self))} wait in {task.work_area}>"
+        self.show_str = "<Supervisor at {work_id} wait in {work_area}>".format(
+            work_id=hex(id(self)), work_area=task.work_area)
 
         with WorkArea(task.work_area.name):
             self.polling_func()

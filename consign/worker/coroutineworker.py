@@ -52,9 +52,11 @@ class CoroutineWorker(object):
     def __init__(self, work_area_name: str="DEFAULT_WORK_AREA", *, work_area=None):
         #: ``CoroutineWorker`` 为此 ``WorkArea`` 工作
         self.work_area = work_area or getattr(builtins, "WORK_AREA_DICT", {}).get(work_area_name, None)
-        assert self.work_area, f"WORK_AREA_DICT不存在 或 WORK_AREA_DICT中没有名为'{work_area_name}'的key"
+        assert self.work_area, "WORK_AREA_DICT不存在 或 WORK_AREA_DICT中没有名为 {work_area_name} 的key".format(
+            work_area_name=work_area_name)
 
-        self.show_str = f"<CoroutineWork at {hex(id(self))} work in {self.work_area}>"
+        self.show_str = "<CoroutineWork at {work_id} work in {work_area}>".format(
+            work_id=hex(id(self)), work_area=self.work_area)
 
     def qsize(self):
         """

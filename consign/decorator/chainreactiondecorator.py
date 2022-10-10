@@ -92,7 +92,7 @@ def chain_reaction(func):
     """
 
     order = getattr(func, "order", None)
-    assert order, f"{func.__name__} 不是被 coroutine 修饰的委托函数"
+    assert order, "{func_name} 不是被 coroutine 修饰的委托函数".format(func_name=func.__name__)
     default = (None, None)
     order.old_complete_callback = old_complete_callback = order.complete_callback
 

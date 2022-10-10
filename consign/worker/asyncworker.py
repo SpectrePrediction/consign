@@ -72,8 +72,10 @@ class AsyncWorker(CoroutineWorker):
 
     def __init__(self, work_area_name: str = "DEFAULT_WORK_AREA", *, work_area=None):
         super(AsyncWorker, self).__init__(work_area_name, work_area=work_area)
-        self.show_str = f"<AsyncWorker at {hex(id(self))} work in {self.work_area}>"
-        # __thread_list不对外暴露，对外建议使用thread_list
+        self.show_str = "<AsyncWorker at {work_id} work in {work_area}>".format(
+            work_id=hex(id(self)), work_area=self.work_area)
+
+        #: __thread_list不对外暴露，对外建议使用thread_list
         self.__thread_list = []
 
     @property
@@ -118,8 +120,7 @@ class AsyncWorker(CoroutineWorker):
 
         :return: 创建的线程对象
         """
-        # consign_thread = threading.Thread(target=self.loop_work, name=f"consign_{name or uuid4()}")
-        consign_thread = Process(target=self.loop_work, name=f"consign_{name or uuid4()}")
+        consign_thread = Process(target=self.loop_work, name="consign_{name}".format(name=name or uuid4()))
         self.__thread_list.append(consign_thread)
         consign_thread.daemon = daemon
         consign_thread.start()

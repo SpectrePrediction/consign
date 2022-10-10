@@ -50,7 +50,7 @@ def repeated_call(debug):
         if debug is True:
             return func
 
-        assert callable(func), f"{func} 不是一个可调用对象"
+        assert callable(func), "{func} 不是一个可调用对象".format(func=func)
 
         def _temp_func(*args, **kwargs):
             def _recall_func():

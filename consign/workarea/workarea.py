@@ -124,12 +124,12 @@ class WorkArea(metaclass=SameNameSingleton):
 
     def __init__(self, name: str="DEFAULT_WORK_AREA"):
         self.name = name
-        self.show_str = f"<'{name}' Work at {hex(id(self))}"
+        self.show_str = "<'{name}' Work at {work_area_id}".format(name=name, work_area_id=hex(id(self)))
         # win 环境下 multiprocessing 的 Queue 无法序列化 generator，所以暂时没有办法做适配，期待下版本更新
         self.queue = Queue()
         # 使用LifoQueue先进后出队列是为了兼容 同名区域单例模式下 被嵌套的情况
         # 使用ContextVar上下文变量是为了兼容 同名区域单例模式下 多线程中队列顺序冲突的情况
-        self.old_work_area_queue = ContextVar(f"{name}_LifoQueue", default=None)
+        self.old_work_area_queue = ContextVar("{name}_LifoQueue".format(name=name), default=None)
 
     def __enter__(self):
         """
@@ -208,7 +208,7 @@ class WorkArea(metaclass=SameNameSingleton):
         return inner
 
     def __str__(self):
-        return f"{self.show_str} and in {currentThread()}>"
+        return "{info} and now in {thread}>".format(info=self.show_str, thread=currentThread())
 
     __repr__ = __str__
 
