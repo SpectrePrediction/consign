@@ -12,8 +12,12 @@
 
 import os
 import sys
+
+from pathlib import Path
+
 # consign/consign/
-sys.path.insert(0, os.path.abspath('../../'))
+abspath = os.path.abspath('../../')
+sys.path.insert(0, abspath)
 
 
 # -- Project information -----------------------------------------------------
@@ -23,7 +27,19 @@ copyright = '2022, SpectrePrediction'
 author = 'SpectrePrediction'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.2'
+
+# Parse version
+line = ""
+
+with open(os.path.join(abspath, "consign", "__init__.py"), mode='r', encoding="utf-8") as f:
+    read_text = f.read()
+
+for line in read_text.split("\n"):
+    if line.startswith("__version__ ="):
+        break
+version = line.split(" = ")[-1].strip('"')
+
+release = version
 
 
 # -- General configuration ---------------------------------------------------
@@ -63,6 +79,8 @@ language = 'zh_CN'
 exclude_patterns = []
 
 # linkcode
+
+
 def linkcode_resolve(domain, info):
 
     filename = info['module']
@@ -96,9 +114,9 @@ def linkcode_resolve(domain, info):
 # }
 # html_sidebars  = { 'sidebar' : [ 'localtoc.html' , 'sourcelink.html' , 'searchbox.html' ]}
 
+
 # 看起来很简洁，但python版本不支持3.6, 他最好看，为了他现在使用更高版本的python
 html_theme = "furo"
-
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

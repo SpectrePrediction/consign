@@ -20,7 +20,7 @@ consign
 
    GitHub page <https://github.com/SpectrePrediction/consign>
 
-.. image:: https://img.shields.io/badge/consign-1.0.2-blue
+.. image:: https://img.shields.io/badge/consign-1.0.3-blue
    :alt: 版本
 
 .. image:: https://readthedocs.org/projects/consign/badge/?version=latest
